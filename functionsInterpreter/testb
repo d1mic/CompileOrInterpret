@@ -1,0 +1,9 @@
+function f = "1+x*x"
+f
+function g = "sin(cos(x))+3.12"
+g
+function h = "(1+x*x)"
+h
+f'
+h[4]
+g[3]

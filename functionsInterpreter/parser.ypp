@@ -1,0 +1,93 @@
+%{
+    #include <iostream>
+    #include <string>
+    #include <cstdlib>
+    #include <map>
+    #include "funkcije.hpp"
+    #define YYDEBUG 1
+    using namespace std;
+    
+    void yyerror(string s){
+        cerr << "Syntax error: " << s << endl;
+        exit(EXIT_FAILURE);
+    }
+    extern int yylex();
+    
+    
+    map<char , Funkcija*> symbol_table; 
+%}
+%union {
+
+    char ime;
+    float br;
+    Funkcija *func;
+}
+
+%type <func> E
+
+
+%token function_token sin_token cos_token x_token
+%token <ime> id_token
+%token <br> num_token
+
+
+%left '+' '-'
+%left '*' '/'
+%nonassoc '\''
+
+%%
+
+program: program Naredba '\n' 
+        | Naredba '\n' 
+        ;
+Naredba :  function_token id_token '=' '"' E '"' {  map<char,Funkcija *>::iterator i = symbol_table.find($2);
+                                                    if(i != symbol_table.end()){
+                                                        delete i->second;
+                                                    }
+                                                    symbol_table[$2] = $5;
+                                                    }
+        | id_token  {                               map<char,Funkcija *>::iterator i = symbol_table.find($1);
+                                                    if(i == symbol_table.end()){
+                                                       yyerror("Undefined function");
+                                                    }
+                                                    i->second->ispisi();
+                                                    cout << endl;
+                    }
+        | id_token '\'' {                           map<char,Funkcija *>::iterator i = symbol_table.find($1);
+                                                    if(i == symbol_table.end()){
+                                                       yyerror("Undefined function");
+                                                    }
+                                                    Funkcija *pom = i->second->izvod();
+                                                    pom->ispisi();
+                                                    cout << endl;
+        }
+        | id_token '[' num_token ']' {              map<char , Funkcija*>::iterator i = symbol_table.find($1);
+                                                    if(i == symbol_table.end()){
+                                                        yyerror("Undefined function");
+                                                    }
+                                                    float x = i->second->izracunaj($3);
+                                                    cout << x << endl;
+        }
+        ;
+E: E '+' E {$$ = new Add($1,$3);}
+    | E '-' E {$$ = new Minus($1,$3);}
+    | E '*' E {$$ = new Mul($1,$3);}
+    | E '/' E {$$ =  new Div($1, $3);}
+    | '(' E ')' { $$ = $2;}
+    | x_token {$$ = new IdenticFunc();}
+    | num_token {$$ = new Const($1);}
+    | sin_token '(' E ')' {$$ = new Sin($3);}
+    | cos_token '(' E ')' {$$ = new Cos($3);}
+
+%%
+int main(){
+
+    //yydebug = 1;
+    yyparse();
+    
+    for(map<char,Funkcija *>::iterator i = symbol_table.begin(); i != symbol_table.end(); i++){
+        delete i->second;
+    }
+    return 0;
+
+}
