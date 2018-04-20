@@ -1,0 +1,9 @@
+BASIC ab
+BASIC a | b
+BASIC [a-f]+c
+DEFINITION F = ab
+BASIC {F}+
+MINLEN a*[c-v]|abc
+DEFINITION A = [a-e]
+DEFINITION B = {A}|r
+MINLEN {B}cd|ad

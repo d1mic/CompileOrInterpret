@@ -1,0 +1,73 @@
+%{
+    #include <iostream>
+    #include <string>
+    #include <map>
+    #include <cstdlib>
+    #include "Regex.hpp"
+    #define YYDEBUG 1
+    using namespace std;
+    
+    void yyerror(string s){
+        cerr << "Parser error: " << s << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    extern int yylex();
+    
+    map<char, Regex*> symbol_table;
+
+%}
+%union {
+    char var;
+    Regex *r;
+}
+
+%token basic_token definition_token minlen_token
+%token <var> id_token 
+%token <var> name_token
+
+%type <r> E T F
+
+
+%%
+
+program: program naredba '\n' {}
+        | naredba '\n'  {}
+        ;
+        
+naredba : basic_token E { $2->print();
+                          cout << endl;}
+        | minlen_token E  { cout << $2->minlen() << endl;}
+        | definition_token name_token '=' E {
+                                             map<char , Regex *>::iterator i = symbol_table.find($2);
+                                             if( i != symbol_table.end()){
+                                                delete i->second;
+                                             }
+                                             symbol_table[$2] = $4;
+        }
+        ;
+E : E '|' T     {$$ = new Disjunction($1,$3);}
+    | T         {$$ = $1;}
+    ;
+T:  T  F        {$$= new Concatenate($1,$2);}
+    | F         {$$ = $1;}
+    ;
+F: F '*'        {$$ = new Kleene($1);}
+   | F '+'      {$$ = new Plus($1);}
+   | '(' E ')'  {$$ = $2;}
+   | '[' id_token '-' id_token ']' {$$ = new CharacterClass($2,$4);}
+   | '{' name_token '}' {  map<char , Regex *>::iterator i = symbol_table.find($2);
+                         if( i == symbol_table.end()){
+                            yyerror("Regex not defined");
+                         }
+                         $$ = i->second;
+                      }
+                        
+   | id_token   {$$ = new Letter($1);}
+   ;
+%%
+int main(){
+    //yydebug = 1;
+    yyparse();
+    return 0;
+}
