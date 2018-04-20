@@ -1,0 +1,11 @@
+pocetak
+    ispisi(2*3);
+    ispisi(2+3*1);
+    i = 3+2*7;
+    ispisi("Cao ovo je moj tekst");
+    ispisi(i);
+    k = 5;
+    sve_dok 2+4 onda 
+        ispisi("poyy")
+    
+kraj.
